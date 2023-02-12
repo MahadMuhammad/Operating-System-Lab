@@ -25,7 +25,7 @@ void add_student(FILE *fp, int roll_no) {
 
     // writing in file
     fwrite(&s, sizeof(struct student), 1, fp);
-    printf("Student added successfully.\n");
+    printf("\n---Student added successfully.---\n\n");
 }
 
 void read_student(FILE *fp, int roll_no) {
@@ -43,11 +43,11 @@ void read_student(FILE *fp, int roll_no) {
 
     if (found) 
     {
-        printf("Name: %s\n", s.name);
+        printf("\nName: %s\n", s.name);
         printf("Roll No.: %d\n", s.roll_no);
-        printf("Email: %s\n", s.email);
+        printf("Email: %s\n\n", s.email);
     } else {
-        printf("Student with roll number %d not found.\n", roll_no);
+        printf("\n---Student with roll number %d not found.---\n", roll_no);
     }
 }
 
@@ -79,9 +79,9 @@ void delete_student(FILE *fp, int roll_no) {
     rename("temp.bin", "students.bin");
 
     if (found) {
-        printf("Student with roll number %d deleted successfully.\n", roll_no);
+        printf("\n---Student with roll number %d deleted successfully.---\n\n", roll_no);
     } else {
-        printf("Student with roll number %d not found.\n", roll_no);
+        printf("\n---Student with roll number %d not found.---\n\n", roll_no);
     }
 }
 
