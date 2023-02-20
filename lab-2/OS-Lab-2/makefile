@@ -13,6 +13,7 @@
 #	rm *.o final
 #Method 3
 $(CC) = gcc
+
 final: main.o add.o hello.o
 	$(CC) main.o add.o hello.o -o final
 	
@@ -24,6 +25,7 @@ hello.o: hello.c header.h
 	
 add.o:	add.c header.h
 	$(CC) -c add.c
+
 	
 clean:
 	rm *.o final
