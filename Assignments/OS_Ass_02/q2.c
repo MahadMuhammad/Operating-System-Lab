@@ -60,7 +60,7 @@ int main()
         // closing reading end
         close(fd[0]);
 
-        //printf("\nTotal time: %d", total);
+        printf("\nTotal time: %d\n", lapTime * lapCount);
         sleep(1);
         exit(EXIT_SUCCESS);
         printf("\n");
@@ -78,11 +78,10 @@ int main()
             if (lapTimeCounter == lapTime)
             {
                 lap++;
-                printf("\nLap %d: %d", lap, lapTimeCounter);
+                printf("\nLap %d: COMPLETED", lap);
                 lapTimeCounter = 0;
             }
             sleep(1);
-            printf("\n TOTAL TIME: %d", total);
         }
 
         // closing reading end of the pipe
