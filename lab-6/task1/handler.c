@@ -8,33 +8,48 @@ For example, if the first process sends the message Hi There, the second process
 
 */
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <unistd.h>
 
-int main(int argc,char* argv[])
+int main(int argc,char* argv [])
 {
+    // inputing string and storing it in a dynamic array
+    printf("\n [PID = %d] Enter a string: ", getpid());
+    char *str = (char *)malloc(100*sizeof(char));
+    // with spaces
+    scanf("%[^\n]%*c", str);
 
-    int res, n;
-    res = open("fifo1", O_WRONLY);
-    write(res, "Hi There", 7);
-    // printf("Sender process handler.c having PID %d sent the data \n", getpid());
+    
 
+    int res;
+    // send the string to the second proces with myfifo, opening fifo
+    res = mkfifo("myfifo", 0777);
+    /*
+        O_CREAT: If the file does not exist, it will be created.
+        O_EXCL: If O_CREAT and O_EXCL are set, open() will fail if the file exists.
+        O_WRONLY: Open for writing only.
 
-    char str[100];
-    fflush(stdin);
-    sleep(5);
-    int a;
-    res = open("fifo1", O_RDONLY);
-    n = read(res, str, 100);
-    // printf("Reader process case_changer.c having PID %d started \n ", getpid());
-    // printf("Data received by receiver %d is %s \n", getpid(), str);
+        0777: The file permission bits are set to this value.
+    */
+   
+    //writing to pipe
+    write(res, str, strlen(str)+1);
+    close(1);
 
-    printf("\nThe output is :");
-    printf("%s ",str);
-    printf("\n\n");
+    // reading from pipe
+    char *str2 = (char *)malloc(100*sizeof(char));
+    read(0, str2, 100);
+    close(0);
+
+    sleep(1);
+
+    // printing the output
+    printf("\nOutput string is from process[%d]: %s",  getpid() , str2);
+    printf("\n");
     return 0;
 }

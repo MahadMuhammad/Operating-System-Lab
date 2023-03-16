@@ -1,0 +1,36 @@
+
+# compiling and linking
+
+CC = gcc
+CFLAGS = -Wall -g
+LDFLAGS = -lm
+# gcc standard libraries
+
+# source files
+SRC = $(wildcard *.c)
+# object files
+OBJ = $(SRC:.c=.o)
+
+# executable file
+EXEC = main
+
+all: $(EXEC)
+
+$(EXEC): $(OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+%.o: %.c
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+.PHONY: clean mrproper
+
+clean:
+	rm -rf *.o
+
+cleanout:
+	rm -rf *.out
+
+mrproper: clean
+	rm -rf $(EXEC)
+
+# Path: main.c

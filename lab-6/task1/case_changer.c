@@ -1,41 +1,43 @@
-/*
-    Muhammad Mahad 21L-6195 
-*/
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-int main(int argc,char* argv[])
+
+/*
+    case_changer.c), and the second process reverses the case of each character in
+the message and sends it back to the handler, that will print it on the screen
+*/
+
+int main()
 {
+    // reading from pipe
+    printf("\n[PID = %d] Processing string from handler.c", getpid());
+    char *str = (char *)malloc(100*sizeof(char));
+    read(0, str, 100);
+    close(0);
 
-    int res, n;
-    char str[100];
-    res = open("fifo1", O_RDONLY);
-    n = read(res, str, 100);
-    // printf("Reader process case_changer.c having PID %d started \n ", getpid());
-    // printf("Data received by receiver %d is %s \n", getpid(), str);
-
+    // changing the case of each character
     for (int i = 0; i < strlen(str); i++)
     {
-            if (str[i] >= 'a' && str[i] <= 'z')
-            {
-                str[i] = str[i] - 32;
-            }
-            else if (str[i] >= 'A' && str[i] <= 'Z')
-            {
-                str[i] = str[i] + 32;
-            }
+        if (str[i] >= 'a' && str[i] <= 'z')
+        {
+            str[i] = str[i] - 32;
+        }
+        else if (str[i] >= 'A' && str[i] <= 'Z')
+        {
+            str[i] = str[i] + 32;
+        }
     }
-    // sleep(6);
-    res = open("fifo1", O_WRONLY);
-    write(res, str,strlen(str)+1);
-    printf("Sender process case_changer.c having PID %d sent the data \n", getpid());
-    printf("\nThe output is :");
-    printf("%s ",str);
-    printf("\n\n");
-    // sleep(6);
+
+    
+    // writing to pipe
+    write(1, str, strlen(str)+1);
+    close(1);
+
     return 0;
 }

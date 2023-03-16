@@ -9,45 +9,50 @@ For example, if the first process sends the message Hi There, the second process
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
-#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-int main(int argc,char* argv[])
+#define PIPE_NAME "/tmp/myfifo"
+
+int main()
 {
-    // input array
-    int send_arr[] = {1,5,7,2,15};
+    int fd;
+    int num_of_elements_in_array = 5;
+    int send_array[] = {1, 2, 3, 4, 5};
+    int recv_array[1]; // the sum of the array will be a single integer
 
-        // input in 5 size array
-    int size = sizeof(int) * 5;
+    // create the named pipe
+    mkfifo(PIPE_NAME, 0666);
 
-     printf("\nThe input array is : ");
+    // open the named pipe for writing
+    fd = open(PIPE_NAME, O_WRONLY);
 
-     for(int i=0;i<5;i++){
-        printf("%d   ",send_arr[i]);
-     }
-    printf("\n");
+    // send the integer array to the calculator process
+    int size = sizeof(int) * num_of_elements_in_array;
+    write(fd, send_array, size);
 
-    int res, n;
-    res = open("fifo1", O_WRONLY);
-    write(res, send_arr,size);
-    // printf("Sender process handler.c having PID %d sent the data \n", getpid());
+    // close the write end of the named pipe
+    close(fd);
 
+    // wait for the calculator process to finish processing the array
+    sleep(1);
 
+    // open the named pipe for reading
+    fd = open(PIPE_NAME, O_RDONLY);
 
-    
-    int sum;
-    res = open("fifo1", O_RDONLY);
-    n = read(res,&sum, sizeof(int));
-    // printf("Reader process case_changer.c having PID %d started \n ", getpid());
-    // printf("Data received by receiver %d is %s \n", getpid(), str);
+    // read the sum of the array from the calculator process
+    read(fd, recv_array, sizeof(int));
 
-    printf("\nThe output is :");
-    printf("%d ",sum);
-    printf("\n\n");
+    // display the result on screen
+    printf("The sum of the array is: %d\n", recv_array[0]);
 
-    // sleep(5);
+    // close the read end of the named pipe
+    close(fd);
+
+    // remove the named pipe
+    unlink(PIPE_NAME);
+
     return 0;
 }
