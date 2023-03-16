@@ -33,38 +33,38 @@ int main()
     char op[100];
     read(fd, op, sizeof(op) );
 
-    // int size = strlen(op);
+    int size = strlen(op);
 
-    // char operator = strtok(op , ' ')[0];
+    char operator = strtok(op , ' ')[0];
 
-    // // convert string to int
-    // int operand1 = atoi(strtok(NULL, ' '));
-    // int operand2 = atoi(strtok(NULL, ' '));
+    // convert string to int
+    int operand1 = atoi(strtok(NULL, ' '));
+    int operand2 = atoi(strtok(NULL, ' '));
 
-    // int result;
-    // switch (op[0])
-    // {
-    // case '+':
-    //     result = operand1 + operand2;
-    //     break;
-    // case '-':
-    //     result = operand1 - operand2;
-    //     break;
-    // case '*':
-    //     result = operand1 * operand2;
-    //     break;
-    // case '/':
-    //     result = operand1 / operand2;
-    //     break;
-    // default:
-    //     break;
-    // }
+    int result;
+    switch (op[0])
+    {
+    case '+':
+        result = operand1 + operand2;
+        break;
+    case '-':
+        result = operand1 - operand2;
+        break;
+    case '*':
+        result = operand1 * operand2;
+        break;
+    case '/':
+        result = operand1 / operand2;
+        break;
+    default:
+        break;
+    }
 
-    // printf("\nResult is: %d\n", result);
-    // // write to fifo2
-    // fd = open("fifo1", O_WRONLY);
-    // write(fd, &result, sizeof(result));
-    // close(fd);
+    printf("\nResult is: %d\n", result);
+    // write to fifo2
+    fd = open("fifo1", O_WRONLY);
+    write(fd, &result, sizeof(result));
+    close(fd);
     
     return 0;
 }
