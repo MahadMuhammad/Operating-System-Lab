@@ -18,7 +18,7 @@
 int main(){
    char buff[1024];
    int num;   
-   mknod("myfifo", S_IFIFO | 0666, 0);
+   // mknod("myfifo", S_IFIFO | 0666, 0);
    printf("Waiting for writers....\n");
    int readfd = open("myfifo", O_RDONLY);
    printf("Got a writer\n");

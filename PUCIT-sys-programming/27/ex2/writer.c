@@ -17,7 +17,12 @@
 #include <unistd.h>
 int main(){
    char buff[1024];  
-   mknod("myfifo", S_IFIFO | 0666, 0);
+   // mknod("myfifo", S_IFIFO | 0666, 0);
+   if (mkfifo("myfifo", 0777)){
+    perror("mkfifo");
+    printf("\nError in creating a named pipe\n");
+    exit(EXIT_FAILURE);
+  }
    printf("Waiting for readers....\n");
    int writefd = open("myfifo", O_WRONLY);
    printf("Got a reader -- type some text to be sent\n");

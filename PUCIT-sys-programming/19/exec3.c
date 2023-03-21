@@ -13,7 +13,7 @@ int main(){
    int status;
    pid_t cpid = fork();
    if (cpid == 0){
-      execle("/usr/bin/gnome-calculator","mycalc",NULL, environ);
+      execle("/usr/bin/gnome-calculator","MAHAD",NULL, environ);
       perror("exec failed");
    }
    else{
