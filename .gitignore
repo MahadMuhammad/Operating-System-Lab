@@ -69,3 +69,6 @@ dkms.conf
 
 # Compiled Static libraries
 *.lai
+
+# Arif Butt System programming material
+myexe
