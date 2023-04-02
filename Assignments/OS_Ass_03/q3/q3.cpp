@@ -1,182 +1,79 @@
 /*
-Write a C++/C code to implement the given sorting Algorithms. The main program
+    Muhammad Mahad 21L-6195
+
+Write only algoritm  to implement the given sorting Algorithms. The main program
 thread first generates 1,000,000 Random Integers (or array range can be inserted
 dynamically) at runtime and stores these integers in four files (Unsorted_00.txt,
 Unsorted_01.txt, Unsorted_02.txt, Unsorted_03.txt) each containing 250,000 integers.
-
-The main thread will then create different threads each one implementing one of
+The main thread will then create 4 different threads each one implementing one of
 the below given sorting algorithm and parent will wait for these threads to complete
 their execution
-
-Each chunk is to be treated as an individual sorting task and implemented by a
+1) Each chunk is to be treated as an individual sorting task and implemented by a
 separate thread running one of the algorithms given below
-
-Finally when all the threads complete their tasks, they will exit by saving the results
+2) Finally when all the threads complete their tasks, they will exit by saving the results
 in their respective files, merge.txt, selection.txt, insertion.txt and quick.txt.
-
-When a thread starts it will print its algorithm name, start time and thread id
-
-When the thread ends it will print its exit time
-
-The main program then uses these results further and merges the four sorted lists
+3) When a thread starts it will print its algorithm name, start time and thread id
+4) When the thread ends it will print its exit time
+5)The main program then uses these results further and merges the four sorted lists
 together to make one big sorted list
-
-Final sorted list should be stored in a text file named as (Sorted.txt).
-
+ Final sorted list should be stored in a text file named as (Sorted.txt).
 The sorting algorithms that you are supposed to implement are:
-I. Merge Sort
-II. Selection Sort
-III. Insertion Sort
-IV. Quick Sort
-
+Merge Sort in first file.
+Selection Sort in 2nd file.
+Insertion Sort
+Quick Sort
 */
-
 #include <bits/stdc++.h>
+#include <iostream>
+#include <fstream>
+#include <ctime>
+#include <cstdlib>
 #include <pthread.h>
+#include <chrono>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <sys/time.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 using namespace std;
 
-#define MAX 1000000
-#define MAX_THREAD 4
-#define MAX_FILE 4
-#define MAX_CHUNK 250000
+# define MAX 10 
+# define MAX_FILE 4
+# define MAX_CHUNK  MAX / MAX_FILE
+int COUNT =0;
 
-
-int arr[MAX];
-int chunk[MAX_THREAD][MAX_CHUNK];
-int chunk_size;
-int chunk_count;
-int file_count;
-int file_size;
 int file[MAX_FILE][MAX_CHUNK];
+int arr[MAX];
+bool ctw = true; // check to write
 
+// defining functions prototypes
+void *mergesort(void *arg);
+void *selectionsort(void *arg);
+void *insertionsort(void *arg);
+void *quicksort(void *arg);
 
-void *merge_sort(void *arg);
-void *selection_sort(void *arg);
-void *insertion_sort(void *arg);
-void *quick_sort(void *arg);
-void merge(int arr[], int l, int m, int r);
-void mergeSort(int arr[], int l, int r);
-void selectionSort(int arr[], int n);
-void insertionSort(int arr[], int n);
-int partition (int arr[], int low, int high);
-void quickSort(int arr[], int low, int high);
-
-int main()
-{
-    // generating random numbers
-    srand(time(NULL));
-    for(int i=0; i<MAX; i++)
-        arr[i] = rand()%MAX;
-
-    // creating 4 files and storing 250000 random numbers in each file
-    int fd;
-    for(int i=0; i<MAX_FILE; i++)
-    {
-        string filename = "Unsorted_0" + to_string(i) + ".txt";
-        fd = open(filename.c_str(), O_CREAT | O_WRONLY, 0777);
-        for(int j=0; j<MAX_CHUNK; j++)
-        {
-            file[i][j] = arr[i*MAX_CHUNK + j];
-            string s = to_string(file[i][j]) + " ";
-            write(fd, s.c_str(), s.length());
-        }
-        close(fd);
-    }
-
-    // creating 4 threads
-    pthread_t tid[MAX_THREAD];
-    pthread_create(&tid[0], NULL, merge_sort, NULL);
-    pthread_create(&tid[1], NULL, selection_sort, NULL);
-    pthread_create(&tid[2], NULL, insertion_sort, NULL);
-    pthread_create(&tid[3], NULL, quick_sort, NULL);
-
-    // waiting for all threads to complete
-    for(int i=0; i<MAX_THREAD; i++)
-        pthread_join(tid[i], NULL);
-
-    // merging the 4 sorted files into one file named Sorted.txt
-    int fd1 = open("Sorted.txt", O_CREAT | O_WRONLY, 0777);
-
-    // reading from 4 files and storing in 4 arrays
-    int file1[MAX_CHUNK], file2[MAX_CHUNK], file3[MAX_CHUNK], file4[MAX_CHUNK];
-    fd = open("merge.txt", O_RDONLY);
-    for(int i=0; i<MAX_CHUNK; i++)
-        read(fd, &file1[i], sizeof(int));
-    close(fd);
-    
-    fd = open("selection.txt", O_RDONLY);
-    for(int i=0; i<MAX_CHUNK; i++)
-        read(fd, &file2[i], sizeof(int));
-    close(fd);
-
-    fd = open("insertion.txt", O_RDONLY);
-    for(int i=0; i<MAX_CHUNK; i++)
-        read(fd, &file3[i], sizeof(int));
-    close(fd);
-
-    fd = open("quick.txt", O_RDONLY);
-    for(int i=0; i<MAX_CHUNK; i++)
-        read(fd, &file4[i], sizeof(int));
-    close(fd);
-
-    // merging the 4 arrays into one array and writing to Sorted.txt
-    int i=0, j=0, k=0, l=0;
-
-    mergeSort(file1, 0, MAX_CHUNK-1);
-    mergeSort(file2, 0, MAX_CHUNK-1);
-    mergeSort(file3, 0, MAX_CHUNK-1);
-    mergeSort(file4, 0, MAX_CHUNK-1);
-
-    // comparing file1, file2, file3 and file4 and writing the smallest element to Sorted.txt
-    fd = open("Sorted.txt", O_CREAT | O_WRONLY, 0777);
-
-    merge (file1, 0, MAX_CHUNK/2 - 1, MAX_CHUNK - 1);
-    merge (file2, 0, MAX_CHUNK/2 - 1, MAX_CHUNK - 1);
-    merge (file3, 0, MAX_CHUNK/2 - 1, MAX_CHUNK - 1);
-    merge (file4, 0, MAX_CHUNK/2 - 1, MAX_CHUNK - 1);
-
-    
-
-
-    return 0;
-}
-
-// merge sort
-void mergeSort(int arr[], int l, int r)
-{
-    if (l < r)
-    {
-        int m = l+(r-l)/2;
-        mergeSort(arr, l, m);
-        mergeSort(arr, m+1, r);
-        merge(arr, l, m, r);
-    }
-}
-
+// sorting functions
 void merge(int arr[], int l, int m, int r)
 {
     int i, j, k;
     int n1 = m - l + 1;
     int n2 =  r - m;
- 
+
+    /* create temp arrays */
     int L[n1], R[n2];
- 
+
+    /* Copy data to temp arrays L[] and R[] */
     for (i = 0; i < n1; i++)
         L[i] = arr[l + i];
     for (j = 0; j < n2; j++)
         R[j] = arr[m + 1+ j];
- 
-    i = 0;
-    j = 0;
-    k = l;
+
+    /* Merge the temp arrays back into arr[l..r]*/
+    i = 0; // Initial index of first subarray
+    j = 0; // Initial index of second subarray
+    k = l; // Initial index of merged subarray
     while (i < n1 && j < n2)
     {
         if (L[i] <= R[j])
@@ -191,14 +88,18 @@ void merge(int arr[], int l, int m, int r)
         }
         k++;
     }
- 
+
+    /* Copy the remaining elements of L[], if there
+       are any */
     while (i < n1)
     {
         arr[k] = L[i];
         i++;
         k++;
     }
- 
+
+    /* Copy the remaining elements of R[], if there
+       are any */
     while (j < n2)
     {
         arr[k] = R[j];
@@ -207,31 +108,286 @@ void merge(int arr[], int l, int m, int r)
     }
 }
 
-// selection sort
-void selectionSort(int arr[], int n)
+/* l is for left index and r is right index of the
+   sub-array of arr to be sorted */
+void mergeSort(int arr[], int l, int r)
 {
-    int i, j, min_idx;
- 
-    for (i = 0; i < n-1; i++)
+    if (l < r)
     {
-        min_idx = i;
-        for (j = i+1; j < n; j++)
-          if (arr[j] < arr[min_idx])
-            min_idx = j;
- 
-        swap(arr[min_idx], arr[i]);
+        // Same as (l+r)/2, but avoids overflow for
+        // large l and h
+        int m = l+(r-l)/2;
+
+        // Sort first and second halves
+        mergeSort(arr, l, m);
+        mergeSort(arr, m+1, r);
+
+        merge(arr, l, m, r);
     }
 }
 
-// insertion sort
-void insertionSort(int arr[], int n)
+void QuickSort(int arr[], int low, int high)
 {
+    int i = low, j = high;
+    int tmp;
+    int pivot = arr[(low + high) / 2];
+
+    /* partition */
+    while (i <= j) {
+        while (arr[i] < pivot)
+            i++;
+        while (arr[j] > pivot)
+            j--;
+        if (i <= j) {
+            tmp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+            i++;
+            j--;
+        }
+    };
+
+    /* recursion */
+    if (low < j)
+        QuickSort(arr, low, j);
+    if (i < high)
+        QuickSort(arr, i, high);
+}
+
+// Inline function to print the start time
+inline void printStartTime() {
+    std::cout << "  Start time: " << std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()).time_since_epoch().count() << " ms" << std::endl;
+}
+
+// Inline function to print the end time
+inline void printEndTime() {
+    std::cout << "  End time: " << std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()).time_since_epoch().count() << " ms" << std::endl;
+}
+
+// Inline function to print the time difference in milliseconds
+inline void printTimeDifference() {
+    auto start = std::chrono::high_resolution_clock::now();
+    // Do some work here...
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "  Time difference: " << duration.count() << " ms" << std::endl;
+}
+
+// Inline function to print the thread id pthread_self()
+inline void printThreadId() {
+    std::cout << "  Thread id: " << std::this_thread::get_id() << std::endl;
+}
+
+inline void swap(int *xp, int *yp){
+    int temp = *xp;
+    *xp = *yp;
+    *yp = temp;
+}
+
+int main()
+{
+   int fd;
+
+    // generating random numbers and storing in arr and Unsorted.txt
+    srand(time(NULL));
+
+    fd = open("Unsorted.txt", O_CREAT | O_WRONLY, 0777);
+    for(int i=0; i<MAX; i++){
+        arr[i] = rand()%MAX;
+        string s = to_string(arr[i]) + " ";
+        write(fd, s.c_str(), s.length());
+    }
+    close(fd);
+
+    // creating 4 files and storing MAX/4 random numbers in each file
+    for(int i=0; i<MAX_FILE; i++){
+        string filename = "Unsorted_0" + to_string(i) + ".txt";
+        fd = open(filename.c_str(), O_CREAT | O_WRONLY, 0777);
+        for(int j=0; j<MAX_CHUNK; j++){
+            file[i][j] = arr[i*MAX_CHUNK + j];
+            string s = to_string(file[i][j]) + " ";
+            write(fd, s.c_str(), s.length());
+        }
+        close(fd);
+    }
+
+    // creating 4 threads for each file
+    pthread_t threads[MAX_FILE];
+
+    // creating threads
+    // for(int i=0; i<MAX_FILE; i++){
+    //     string filename = "Unsorted_0" + to_string(i) + ".txt";
+    //     pthread_create(&threads[i], NULL, mergesort, (void *)filename.c_str());
+    // }
+
+    pthread_create(&threads[0], NULL, mergesort, NULL);
+    pthread_create(&threads[1], NULL, selectionsort, NULL);
+    pthread_create(&threads[2], NULL, insertionsort, NULL);
+    pthread_create(&threads[3], NULL, quicksort, NULL);
+
+    // joining threads
+    for(int i=0; i< MAX_FILE; i++)
+        pthread_join(threads[i], NULL);
+
+    cout << "\nMain Thread: " << pthread_self() << " ended" << "\n";
+    cout << COUNT;
+    return 0;
+}
+
+// defining functions
+void *mergesort(void *arg)
+{
+    if(ctw == true){
+        ctw = false;
+        cout << "Merge Sort:  "; printThreadId();cout<<"\n";
+        cout << "Merge Sort:  ";printStartTime();cout<<"\n";
+        ctw = true;
+    }
+    // cout << "Merge Sort:  "; printThreadId();cout<<"\n";
+    // cout << "Merge Sort:  ";printStartTime();cout<<"\n";
+
+
+    // reading from Unsorted_00.txt
+    int fd = open("Unsorted_00.txt", O_RDONLY);
+    int arr[MAX_CHUNK];
+
+    // reading from file and storing in arr
+    for(int i=0; i<MAX_CHUNK; i++)
+    {
+        string s = "";
+        char c;
+        while(read(fd, &c, 1) && c != ' ')
+            s += c;
+        arr[i] = stoi(s);
+        // cout << arr[i] << " ";
+    }
+    close(fd);
+
+    // using merge sort
+    mergeSort(arr, 0, MAX_CHUNK-1);
+
+    // writing to Sorted_00.txt
+    fd = open("Sorted_00.txt", O_CREAT | O_WRONLY, 0777);
+    for(int i=0; i<MAX_CHUNK; i++){
+        string s = to_string(arr[i]) + " ";
+        write(fd, s.c_str(), s.length());
+    }
+    close(fd);
+    // cout << "Sorted_00.txt created" << endl;
+
+    // COUNT++;     // for debugging
+    // cout <<"  ";
+    if(ctw == true){
+        ctw = false;
+        cout << "Merge Sort:  ";printEndTime();cout<<"\n";
+        cout << "Merge Sort:  ";printTimeDifference();cout<<"\n";
+        ctw = true;
+    }
+    // cout << "Merge Sort:  ";printEndTime();cout<<"\n";
+    // cout << "Merge Sort:  ";printTimeDifference();cout<<"\n";
+    pthread_exit(NULL);
+}
+
+void *selectionsort(void *arg)
+{
+    if (ctw == true){
+        ctw = false;
+        cout << "Selection Sort:  "; printThreadId();cout<<"\n";
+        cout << "Selection Sort:  ";printStartTime();cout<<"\n";
+        ctw = true;
+    }
+
+    // reading from Unsorted_01.txt
+    int fd = open("Unsorted_01.txt", O_RDONLY);
+    int arr[MAX_CHUNK];
+
+    // reading from file and storing in arr
+    for(int i=0; i<MAX_CHUNK; i++)
+    {
+        string s = "";
+        char c;
+        while(read(fd, &c, 1) && c != ' ')
+            s += c;
+        arr[i] = stoi(s);
+    }
+    close(fd);
+
+    // using selection sort
+    int i, j, min_idx;
+
+    // One by one move boundary of unsorted subarray
+    for (i = 0; i < MAX_CHUNK-1; i++)
+    {
+        // Find the minimum element in unsorted array
+        min_idx = i;
+        for (j = i+1; j < MAX_CHUNK; j++)
+          if (arr[j] < arr[min_idx])
+            min_idx = j;
+
+        // Swap the found minimum element with the first element
+        swap(&arr[min_idx], &arr[i]);
+    }
+
+    // writing to Sorted_01.txt
+    fd = open("Sorted_01.txt", O_CREAT | O_WRONLY, 0777);
+    for(int i=0; i<MAX_CHUNK; i++){
+        string s = to_string(arr[i]) + " ";
+        write(fd, s.c_str(), s.length());
+    }
+    close(fd);
+    // cout << "Sorted_01.txt created" << endl;
+
+    // COUNT++;     // for debugging
+    if (ctw == true){
+        ctw = false;
+        cout << "Selection Sort:  ";printEndTime();cout<<"\n";
+        cout << "Selection Sort:  ";printTimeDifference();cout<<"\n";
+        ctw = true;
+    }
+    // cout << "Selection Sort:  ";printEndTime();cout<<"\n";
+    // cout << "Selection Sort:  ";printTimeDifference();cout<<"\n";
+    
+    
+    pthread_exit(NULL);
+}
+
+void *insertionsort(void *arg)
+{
+    if (ctw == true){
+        ctw = false;
+        cout << "Insertion Sort:  "; printThreadId();cout<<"\n";
+        cout << "Insertion Sort:  ";printStartTime();cout<<"\n";
+        ctw = true;
+    }
+    // cout << "Insertion Sort:  ";printThreadId();cout<<"\n";
+    // cout << "Insertion Sort:  ";printStartTime();cout<<"\n";
+    
+
+    // reading from Unsorted_02.txt
+    int fd = open("Unsorted_02.txt", O_RDONLY);
+    int arr[MAX_CHUNK];
+
+    // reading from file and storing in arr
+    for(int i=0; i<MAX_CHUNK; i++)
+    {
+        string s = "";
+        char c;
+        while(read(fd, &c, 1) && c != ' ')
+            s += c;
+        arr[i] = stoi(s);
+    }
+    close(fd);
+
+    // using insertion sort
     int i, key, j;
-    for (i = 1; i < n; i++)
+    for (i = 1; i < MAX_CHUNK; i++)
     {
         key = arr[i];
         j = i-1;
- 
+
+        /* Move elements of arr[0..i-1], that are
+           greater than key, to one position ahead
+           of their current position */
         while (j >= 0 && arr[j] > key)
         {
             arr[j+1] = arr[j];
@@ -239,98 +395,80 @@ void insertionSort(int arr[], int n)
         }
         arr[j+1] = key;
     }
-}
 
-// quick sort
-int partition (int arr[], int low, int high)
-{
-    int pivot = arr[high];
-    int i = (low - 1);
- 
-    for (int j = low; j <= high- 1; j++)
-    {
-        if (arr[j] <= pivot)
-        {
-            i++;
-            swap(arr[i], arr[j]);
-        }
-    }
-    swap(arr[i + 1], arr[high]);
-    return (i + 1);
-}
-
-void quickSort(int arr[], int low, int high)
-{
-    if (low < high)
-    {
-        int pi = partition(arr, low, high);
- 
-        quickSort(arr, low, pi - 1);
-        quickSort(arr, pi + 1, high);
-    }
-}
-
-// thread functions
-void *merge_sort(void *arg)
-{
-    int fd = open("merge.txt", O_CREAT | O_WRONLY, 0777);
-    mergeSort(file[0], 0, MAX_CHUNK-1);
-    for(int i=0; i<MAX_CHUNK; i++)
-    {
-        string s = to_string(file[0][i]) + " ";
+    // writing to Sorted_02.txt
+    fd = open("Sorted_02.txt", O_CREAT | O_WRONLY, 0777);
+    for(int i=0; i<MAX_CHUNK; i++){
+        string s = to_string(arr[i]) + " ";
         write(fd, s.c_str(), s.length());
     }
     close(fd);
-    pthread_exit(NULL);
-}
+    // cout << "Sorted_02.txt created" << endl;
 
-void * selection_sort(void *arg)
-{
-    // selection sort
-    int fd = open("selection.txt", O_CREAT | O_WRONLY, 0777);
-    selectionSort(file[1], MAX_CHUNK);
+    // COUNT++;     // for debugging
+    if(ctw == true){
+        ctw = false;
+        cout << "Insertion Sort:  ";printEndTime();cout<<"\n";
+        cout << "Insertion Sort:  ";printTimeDifference();cout<<"\n";
+        ctw = true;
+    }
+    // cout << "Insertion Sort:  ";printEndTime();cout<<"\n";
+    // cout << "Insertion Sort:  ";printTimeDifference();cout<<"\n";
     
-    // writing to file
-    for(int i=0; i<MAX_CHUNK; i++)
-    {
-        string s = to_string(file[1][i]) + " ";
-        write(fd, s.c_str(), s.length());
-    }
-    close(fd);
+    
     pthread_exit(NULL);
 }
 
-void * insertion_sort(void *arg)
+void *quicksort(void *arg)
 {
-    //insertion sort
-    int fd = open("insertion.txt", O_CREAT | O_WRONLY, 0777);
-    insertionSort(file[2], MAX_CHUNK);
-
-        // writing to file
-    for(int i=0; i<MAX_CHUNK; i++)
-    {
-        string s = to_string(file[2][i]) + " ";
-        write(fd, s.c_str(), s.length());
+    if (ctw == true){
+        ctw = false;
+        cout << "Quick Sort:  "; printThreadId();cout<<"\n";
+        cout << "Quick Sort:  ";printStartTime();cout<<"\n";
+        ctw = true;
     }
-    close(fd);
-    pthread_exit(NULL);
-}
-
-void *quick_sort(void *arg)
-{
-    // quick sort
-    int fd = open("quick.txt", O_CREAT | O_WRONLY, 0777);
-    quickSort(file[3], 0, MAX_CHUNK-1);
-
-    // writing to file
-       for(int i=0; i<MAX_CHUNK; i++)
-    {
-        string s = to_string(file[3][i]) + " ";
-        write(fd, s.c_str(), s.length());
-    }
-    close(fd);
-    pthread_exit(NULL);
-}
+    // cout << "Quick Sort:  ";printThreadId();cout<<"\n";
+    // cout << "Quick Sort:  ";printStartTime();cout<<"\n";
     
 
+    // reading from Unsorted_03.txt
+    int fd = open("Unsorted_03.txt", O_RDONLY);
+    int arr[MAX_CHUNK];
+
+    // reading from file and storing in arr
+    for(int i=0; i<MAX_CHUNK; i++)
+    {
+        string s = "";
+        char c;
+        while(read(fd, &c, 1) && c != ' ')
+            s += c;
+        arr[i] = stoi(s);
+    }
+    close(fd);
+
+    // using quick sort
+    QuickSort(arr, 0, MAX_CHUNK-1);
+
+    // writing to Sorted_03.txt
+    fd = open("Sorted_03.txt", O_CREAT | O_WRONLY, 0777);
+    for(int i=0; i<MAX_CHUNK; i++){
+        string s = to_string(arr[i]) + " ";
+        write(fd, s.c_str(), s.length());
+    }
+    close(fd);
+    // cout << "Sorted_03.txt created" << endl;
+
+    // COUNT++;     // for debugging
+    if(ctw == true){
+        ctw = false;
+        cout << "Quick Sort:  ";printEndTime();cout<<"\n";
+        cout << "Quick Sort:  ";printTimeDifference();cout<<"\n";
+        ctw = true;
+    }
+    // cout << "Quick Sort:  ";printEndTime();cout<<"\n";
+    // cout << "Quick Sort:  ";printTimeDifference();cout<<"\n";
+    
+    
+    pthread_exit(NULL);
+}
 

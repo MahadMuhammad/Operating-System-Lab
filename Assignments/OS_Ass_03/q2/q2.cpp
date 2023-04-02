@@ -39,13 +39,13 @@ void *readFile(void *arg){
     file.open("input.txt");
     while(start == false){
         while(file >> global && flag == false) {
-            cout << "Reading " << global << endl;
+            cout << "Reading " << global << "\n";
             flag = true;
             sleep(1);
         }
         // EOF reached 
         if (file.eof()) {
-            cout << "EOF reached" << endl;
+            cout << "EOF reached :)" << "\n   -- End Of File --   \n";
             break;
         }
     }
@@ -61,12 +61,12 @@ void *insert(void *arg){
         while(flag == true){
             node *temp = new node(global);
             if(head == NULL){
-                cout << "Inserting " << global << endl;
+                cout << "Inserting " << global << "\n   ----   \n";
                 head = temp;
                 flag = false;
             }
             else{
-                cout << "Inserting " << global << endl;
+                cout << "Inserting " << global << "\n   ----   \n";
                 node *ptr = head;
                 while(ptr->next != NULL){
                     ptr = ptr->next;
