@@ -1,47 +1,20 @@
-/*
-Implement an "alarm clock" class. Threads call "Alarm:GoToSleepFor(int howLong)" to
-go to sleep for a period of time. The alarm clock can be implemented using the
-hardware Timer device (i.e. timer.h). When the timer interrupt goes off, the Timer
-interrupt handler checks to see if any thread that had been asleep needs to wake up
-now. There is no requirement that threads start running immediately after waking up;
-just put them on the ready queue after they have waited for the approximately the right
-amount of time. The person will set an alarm and it will display a message after the set
-amount of time. Provide the options to snooz alarm for 10 sec or stop the alarm as well.
-*/
-#include <bits/stdc++.h>
-#include <time.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <threads.h>
-
+#include <iostream>
+#include <chrono>
+#include <pthread.h>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
 
 using namespace std;
 
-
-
-class Timer {
-public:
-    void start(int howLong) {
-        struct itimerval timer;
-        timer.it_value.tv_sec = howLong;
-        timer.it_value.tv_usec = 0;
-        timer.it_interval.tv_sec = 0;
-        timer.it_interval.tv_usec = 0;
-        setitimer(ITIMER_REAL, &timer, NULL);
-    }
-};
+int stop = false;
 
 
 class AlarmClock {
 public:
     void gotoSleepFor(int howLong) {
-        Timer timer;
-        timer.start(howLong);
-        std::this_thread::sleep_for(std::chrono::seconds(howLong));
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_cv.wait_for(lock, std::chrono::seconds(howLong));
     }
 
     void snooze() {
@@ -49,30 +22,91 @@ public:
     }
 
     void stop() {
-        exit(0);
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_stop = true;
+        m_cv.notify_all();
     }
 
     void setAlarm() {
+        std::unique_lock<std::mutex> lock(m_mutex); // lock the mutex
         int howLong;
-        cout << "Enter the time in seconds: ";
-        cin >> howLong;
+        std::cout << "\nTHREAD["<<pthread_self() <<"] Enter the time in seconds: "<< endl;
+        // using mutex for synchronization
+        
+        // unlock mutex
+        lock.unlock();
+        // wait for user input
+        std::cin >> howLong;
         gotoSleepFor(howLong);
-        cout << "Alarm is ringing" << endl;
-        cout << "Press 1 to snooze or 2 to stop: ";
-        int choice;
-        cin >> choice;
-        if (choice == 1) {
-            snooze();
-        } else {
-            stop();
-        }
+        wakeUp();
     }
-    
 
+    // ready queue
+    void wakeUp() {
+        std::cout << "Wake up!\n";
+    }
+
+    void timerInterrupt() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_cv.notify_all();
+    }
+
+    // get mutex
+    std::mutex& getMutex() {
+        return m_mutex;
+    }
+private:
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    bool m_stop = false;
 };
 
-int main() {
-    AlarmClock alarmClock;
-    alarmClock.setAlarm();
+// Wrapper function for calling the setAlarm() method
+void* alarmThread(void* arg) {
+    AlarmClock* clock = static_cast<AlarmClock*>(arg);
+    clock->setAlarm();
+    return nullptr;
+}
+
+int main()
+{
+    std::cout << "\nWelcome to Alarm Clock Class\n";
+    queue<pthread_t> readyQueue;
+
+    AlarmClock clock;
+    clock.setAlarm();
+    
+    cout<<"\nEnter no. of threads, to be created: ";
+    int n;
+    cin>>n;
+    // using getMutex() to synchronize the threads
+    // std::lock_guard<std::mutex> lock(clock.getMutex());
+    // unlonking the mutex
+    clock.getMutex().unlock();
+    cout << "\nCreating " << n << " threads\n";
+    pthread_t t1[n];
+    for(int i=0;i<n;i++)
+    {
+        clock.getMutex().lock();
+        
+        pthread_create(&t1[i], NULL, alarmThread, &clock);
+        // locking the mutex
+        clock.getMutex().unlock();
+    }
+    for(int i=0;i<n;i++)
+    {  
+        // pushing the thread id to the ready queue
+        readyQueue.push(t1[i]);
+        pthread_join(t1[i], NULL);
+        clock.getMutex().unlock();
+    }
+    // printing the ready queue
+    cout<<"\nReady Queue: ";
+    while(!readyQueue.empty())
+    {
+        cout<<readyQueue.front()<<" \n";
+        readyQueue.pop();
+    }
+
     return 0;
 }
