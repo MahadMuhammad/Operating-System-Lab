@@ -39,7 +39,7 @@ Quick Sort
 
 using namespace std;
 
-# define MAX 10 
+# define MAX 1000000
 # define MAX_FILE 4
 # define MAX_CHUNK  MAX / MAX_FILE
 int COUNT =0;
@@ -184,8 +184,67 @@ inline void swap(int *xp, int *yp){
     *yp = temp;
 }
 
+
+
+
+// iterative merge sort
+void mergeSortIterative(int arr[], int n)
+{
+    int curr_size;  // For current size of subarrays to be merged
+                    // curr_size varies from 1 to n/2
+    int left_start; // For picking starting index of left subarray
+                    // to be merged
+
+    // Merge subarrays in bottom up manner.  First merge subarrays of
+    // size 1 to create sorted subarrays of size 2, then merge subarrays
+    // of size 2 to create sorted subarrays of size 4, and so on.
+    for (curr_size=1; curr_size<=n-1; curr_size = 2*curr_size)
+    {
+        // Pick starting point of different subarrays of current size
+        for (left_start=0; left_start<n-1; left_start += 2*curr_size)
+        {
+            // Find ending point of left subarray. mid+1 is starting
+            // point of right
+            int mid = min(left_start + curr_size - 1, n-1);
+
+            int right_end = min(left_start + 2*curr_size - 1, n-1);
+
+            // Merge Subarrays arr[left_start...mid] & arr[mid+1...right_end]
+            merge(arr, left_start, mid, right_end);
+        }
+    }
+}
+
+bool mergefiles(const std::string& file1, const std::string& file2, const std::string& file3, 
+                const std::string& file4)
+{
+    std::ifstream in1(file1);
+    std::ifstream in2(file2);
+    std::ifstream in3(file3);
+    std::ifstream in4(file4);
+    std::ofstream out("Sorted.txt");
+
+    std::vector<int> v;
+    int x;
+    while (in1 >> x) v.push_back(x);
+    while (in2 >> x) v.push_back(x);
+    while (in3 >> x) v.push_back(x);
+    while (in4 >> x) v.push_back(x);
+
+    std::sort(v.begin(), v.end());
+
+    for (int i = 0; i < v.size(); ++i)
+        out << v[i] << " ";
+
+    return true;
+}
+
 int main()
 {
+    // fast input output
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
    int fd;
 
     // generating random numbers and storing in arr and Unsorted.txt
@@ -229,8 +288,27 @@ int main()
     for(int i=0; i< MAX_FILE; i++)
         pthread_join(threads[i], NULL);
 
+    // merging and sorting insertion.txt, selection.txt, quick.txt and merge.txt
+    int fd1 = open("insertion.txt", O_RDONLY);
+    int fd2 = open("selection.txt", O_RDONLY);
+    int fd3 = open("quick.txt", O_RDONLY);
+    int fd4 = open("merge.txt", O_RDONLY);
+
+
+    //using bool mergefiles(const std::string& file1, const std::string& file2, const std::string& file3, 
+                // const std::string& file4) function
+    if(mergefiles("insertion.txt", "selection.txt", "quick.txt", "merge.txt"))
+        cout << "Sorted.txt created successfully" << "\n";
+    else
+        cout << "Error in creating Sorted.txt" << "\n";
+
+
+
+
+    
+
     cout << "\nMain Thread: " << pthread_self() << " ended" << "\n";
-    cout << COUNT;
+    // cout << COUNT;
     return 0;
 }
 
@@ -267,7 +345,7 @@ void *mergesort(void *arg)
     mergeSort(arr, 0, MAX_CHUNK-1);
 
     // writing to Sorted_00.txt
-    fd = open("Sorted_00.txt", O_CREAT | O_WRONLY, 0777);
+    fd = open("merge.txt", O_CREAT | O_WRONLY, 0777);
     for(int i=0; i<MAX_CHUNK; i++){
         string s = to_string(arr[i]) + " ";
         write(fd, s.c_str(), s.length());
@@ -280,7 +358,7 @@ void *mergesort(void *arg)
     if(ctw == true){
         ctw = false;
         cout << "Merge Sort:  ";printEndTime();cout<<"\n";
-        cout << "Merge Sort:  ";printTimeDifference();cout<<"\n";
+        // cout << "Merge Sort:  ";printTimeDifference();cout<<"\n";
         ctw = true;
     }
     // cout << "Merge Sort:  ";printEndTime();cout<<"\n";
@@ -329,7 +407,7 @@ void *selectionsort(void *arg)
     }
 
     // writing to Sorted_01.txt
-    fd = open("Sorted_01.txt", O_CREAT | O_WRONLY, 0777);
+    fd = open("selection.txt", O_CREAT | O_WRONLY, 0777);
     for(int i=0; i<MAX_CHUNK; i++){
         string s = to_string(arr[i]) + " ";
         write(fd, s.c_str(), s.length());
@@ -341,7 +419,7 @@ void *selectionsort(void *arg)
     if (ctw == true){
         ctw = false;
         cout << "Selection Sort:  ";printEndTime();cout<<"\n";
-        cout << "Selection Sort:  ";printTimeDifference();cout<<"\n";
+        // cout << "Selection Sort:  ";printTimeDifference();cout<<"\n";
         ctw = true;
     }
     // cout << "Selection Sort:  ";printEndTime();cout<<"\n";
@@ -397,7 +475,7 @@ void *insertionsort(void *arg)
     }
 
     // writing to Sorted_02.txt
-    fd = open("Sorted_02.txt", O_CREAT | O_WRONLY, 0777);
+    fd = open("insertion.txt", O_CREAT | O_WRONLY, 0777);
     for(int i=0; i<MAX_CHUNK; i++){
         string s = to_string(arr[i]) + " ";
         write(fd, s.c_str(), s.length());
@@ -409,7 +487,7 @@ void *insertionsort(void *arg)
     if(ctw == true){
         ctw = false;
         cout << "Insertion Sort:  ";printEndTime();cout<<"\n";
-        cout << "Insertion Sort:  ";printTimeDifference();cout<<"\n";
+        // cout << "Insertion Sort:  ";printTimeDifference();cout<<"\n";
         ctw = true;
     }
     // cout << "Insertion Sort:  ";printEndTime();cout<<"\n";
@@ -450,7 +528,7 @@ void *quicksort(void *arg)
     QuickSort(arr, 0, MAX_CHUNK-1);
 
     // writing to Sorted_03.txt
-    fd = open("Sorted_03.txt", O_CREAT | O_WRONLY, 0777);
+    fd = open("quick.txt", O_CREAT | O_WRONLY, 0777);
     for(int i=0; i<MAX_CHUNK; i++){
         string s = to_string(arr[i]) + " ";
         write(fd, s.c_str(), s.length());
@@ -462,7 +540,7 @@ void *quicksort(void *arg)
     if(ctw == true){
         ctw = false;
         cout << "Quick Sort:  ";printEndTime();cout<<"\n";
-        cout << "Quick Sort:  ";printTimeDifference();cout<<"\n";
+        // cout << "Quick Sort:  ";printTimeDifference();cout<<"\n";
         ctw = true;
     }
     // cout << "Quick Sort:  ";printEndTime();cout<<"\n";

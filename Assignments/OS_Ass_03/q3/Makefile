@@ -2,7 +2,7 @@
 # Make file for q3
 
 CC = g++
-CFLAGS = -Wall -g
+CFLAGS = # -Wall
 
 q3.out: q3.cpp
 	$(CC) $^ -o $@ $(CFLAGS)
