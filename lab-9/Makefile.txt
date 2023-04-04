@@ -1,0 +1,20 @@
+# 21L-6195
+# This file is making issue, when we send it over internet, beccause others file
+# systems will consider this as a binary file, so I add ".txt" extension.
+CC = gcc
+CFLAGS = -lpthread -Wall -g
+
+
+main: q1.out q2.out q3.out
+
+q1.out: 6195_Q1.c
+	$(CC) $^ -o $@ $(CFLAGS)
+
+q2.out: 6195_Q2.c
+	$(CC) $^ -o $@ $(CFLAGS)
+
+q3.out: 6195_Q3.c
+	$(CC) $^ -o $@ $(CFLAGS)
+
+clean:
+	rm -f *.out
