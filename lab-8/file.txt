@@ -1,0 +1,2 @@
+New file descriptor 1 
+This is written to file.txt
